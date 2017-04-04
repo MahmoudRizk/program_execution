@@ -1,0 +1,88 @@
+import subprocess
+from subprocess import PIPE
+from threading import Thread
+from queue import Queue, Empty
+import time
+import os
+import threading
+
+
+class ProcessCaller(threading.Thread):
+    def __init__(self,name,args,table):
+        threading.Thread.__init__(self)
+        self.table = table
+        self.name = name
+        args = 'nohup ' + args
+        self.p = subprocess.Popen(args.split(),stderr=PIPE, stdout=PIPE)
+        table[self.p.pid] = args.split()[1]
+
+    def run(self):
+        print (self.name,":is running.")
+        self.p.communicate()
+        if(self.p.poll != None):
+            del self.table[self.p.pid]
+            print(self.name,":is terminated.")
+
+class SystemCaller:
+    def __init__(self):
+        self.table = {}
+
+    def open(self,args):
+        ProcessCaller("p",args,self.table).start()
+
+    def kill(self,pid):
+        subprocess.Popen(['kill' ,str(pid)])
+        #del self.table[pid]
+
+    def close(self,args):
+        for pid, name in self.table.items():
+            if name == args:
+                subprocess.Popen(['kill' ,str(pid)])
+                return
+
+    def print_table(self):
+        print(self.table)
+
+#args = 'gedit'
+s = SystemCaller()
+s.open('gedit')
+s.print_table()
+s.open('firefox')
+s.print_table()
+s.close('gedit')
+s.print_table()
+
+while(True):
+    str = input()
+    if(str == 'table'):
+        s.print_table()
+    elif(str.split()[0] == 'kill'):
+	s.kill(str.split()[1])
+
+
+
+
+"""
+counter = 1
+args=""
+while(args != 'exit()'):
+    args = input()
+    counter = counter + 1
+    if(args == 'table'):
+        print (table)
+    elif(args.split()[0] == 'kill'):
+        killer = subprocess.Popen(['kill' , args.split()[1]])
+    elif(args.split()[0] == 'threads'):
+        p.print_stderr
+    else:
+        try:
+            #args = [args]
+            p = ProcessCaller("p"+str(counter),args)
+            p.start()
+            #threads.append(p)
+            p.print_stderr
+        except:
+            print("Program not found.")
+
+print('closed')
+"""
